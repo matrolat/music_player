@@ -11,17 +11,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => MusicBloc(MusicService())..add(LoadMusicEvent())),
-        BlocProvider(create: (_) => PlayerBloc()),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: Colors.black,
+    return RepositoryProvider(
+      create: (_) => MusicService(),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<MusicBloc>(
+            create: (context) =>
+                MusicBloc(context.read<MusicService>())..add(LoadMusicEvent()),
+          ),
+          BlocProvider<PlayerBloc>(
+  create: (context) => PlayerBloc(
+    context.read<MusicService>(),
+    context.read<MusicBloc>(), // ✅ Provide MusicBloc instance
+  ),
+),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.dark().copyWith(
+            scaffoldBackgroundColor: Colors.black,
+          ),
+          home: const MainScreen(isSidebarRight: true),
         ),
-        home: const MainScreen(), // ← updated
       ),
     );
   }

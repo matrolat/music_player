@@ -10,4 +10,18 @@ class SongModel {
     required this.artist,
     required this.path,
   });
+
+  SongModel copyWith({
+    String? id,
+    String? title,
+    String? artist,
+    String? path,
+  }) {
+    return SongModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      artist: artist ?? this.artist,
+      path: path ?? this.path,
+    );
+  }
 }

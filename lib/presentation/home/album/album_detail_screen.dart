@@ -32,16 +32,18 @@ class AlbumDetailScreen extends StatelessWidget {
               itemCount: album.songs.length,
               itemBuilder: (context, index) {
                 final song = album.songs[index];
+                final isDev = AppConfig.isDevMode;
+
                 return ListTile(
                   leading: const Icon(Icons.music_note, color: Colors.white),
                   title: Text(song.title, style: const TextStyle(color: Colors.white)),
                   subtitle: Text(song.artist, style: const TextStyle(color: Colors.grey)),
                   onTap: () {
-                    final path = AppConfig.isDevMode
-                        ? 'assets/audio/sample.mp3'
-                        : song.path;
+                    final songToPlay = isDev
+                        ? song.copyWith(path: 'assets/audio/sample.mp3') // optional override
+                        : song;
 
-                    context.read<PlayerBloc>().add(PlaySong(path));
+                    context.read<PlayerBloc>().add(PlaySong(songToPlay));
                   },
                 );
               },

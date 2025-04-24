@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../core/models/song_model.dart';
 
 abstract class PlayerState extends Equatable {
   @override
@@ -8,15 +9,22 @@ abstract class PlayerState extends Equatable {
 class PlayerInitial extends PlayerState {}
 
 class PlayerPlaying extends PlayerState {
-  final String? songPath;
+  final SongModel song;
 
-  PlayerPlaying({this.songPath});
+  PlayerPlaying({required this.song});
 
   @override
-  List<Object?> get props => [songPath];
+  List<Object?> get props => [song];
 }
 
-class PlayerPaused extends PlayerState {}
+class PlayerPaused extends PlayerState {
+  final SongModel song;
+
+  PlayerPaused({required this.song});
+
+  @override
+  List<Object?> get props => [song];
+}
 
 class PlayerStopped extends PlayerState {}
 

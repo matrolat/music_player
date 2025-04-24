@@ -1,12 +1,10 @@
-// 📁 presentation/common/audio_player_controls.dart (Improved UI + fix default song)
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:just_audio/just_audio.dart' as audio;
+import '../../core/audio_player/audio_player_manager.dart';
+import '../../core/models/song_model.dart';
 import '../../state/player_bloc/player_bloc.dart';
 import '../../state/player_bloc/player_event.dart';
 import '../../state/player_bloc/player_state.dart';
-import '../../core/audio_player/audio_player_manager.dart';
 
 class AudioPlayerControls extends StatefulWidget {
   const AudioPlayerControls({super.key});
@@ -19,11 +17,11 @@ class _AudioPlayerControlsState extends State<AudioPlayerControls> {
   final _player = AudioPlayerManager().player;
   Duration _currentPosition = Duration.zero;
   Duration _duration = Duration.zero;
+  bool _showThumb = false;
 
   @override
   void initState() {
     super.initState();
-
     _player.positionStream.listen((pos) {
       setState(() => _currentPosition = pos);
     });
@@ -33,96 +31,133 @@ class _AudioPlayerControlsState extends State<AudioPlayerControls> {
     });
   }
 
+  void _seekTo(double value) {
+    final position = Duration(milliseconds: value.toInt());
+    context.read<PlayerBloc>().add(SeekSong(position));
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, state) {
-        final isPlaying = state is PlayerPlaying;
+        SongModel? song;
+        bool isPlaying = _player.isPlaying;
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey[900],
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        if (state is PlayerPlaying || state is PlayerPaused) {
+          song = (state as dynamic).song;
+        }
+
+        if (song == null) {
+          return const SizedBox.shrink();
+        }
+
+        return GestureDetector(
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
+            if (velocity > 0) {
+              context.read<PlayerBloc>().add(PlayPrevious());
+            } else if (velocity < 0) {
+              context.read<PlayerBloc>().add(PlayNext());
+            }
+          },
+          child: Stack(
+            alignment: Alignment.topCenter,
             children: [
-              Row(
-                children: [
-                  Text(
-                    _formatDuration(_currentPosition),
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                  Expanded(
-                    child: Slider(
-                      value: _duration.inMilliseconds > 0
-                          ? _currentPosition.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble()
-                          : 0.0,
-                      max: _duration.inMilliseconds > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
-                      onChanged: (value) {
-                        final pos = Duration(milliseconds: value.toInt());
-                        context.read<PlayerBloc>().add(SeekSong(pos));
+              Container(
+                height: 70,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                margin: const EdgeInsets.only(top: 13),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF121212),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black54,
+                      blurRadius: 10,
+                      offset: Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            song.title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            song.artist,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                        size: 36,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        if (isPlaying) {
+                          context.read<PlayerBloc>().add(PauseSong());
+                        } else {
+                          context.read<PlayerBloc>().add(PlaySong(song!));
+                        }
                       },
-                      activeColor: Colors.greenAccent,
-                      inactiveColor: Colors.white30,
                     ),
-                  ),
-                  Text(
-                    _formatDuration(_duration),
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.skip_previous, color: Colors.white),
-                    onPressed: () {
-                      context.read<PlayerBloc>().add(PlayPrevious());
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                      size: 48,
-                      color: Colors.white,
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 28,
+                  alignment: Alignment.center,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 3,
+                      activeTrackColor: const Color(0xFF1DB954),
+                      inactiveTrackColor: Colors.white12,
+                      thumbColor: const Color(0xFF1DB954),
+                      overlayShape: SliderComponentShape.noOverlay,
+                      thumbShape: _showThumb
+                          ? const RoundSliderThumbShape(enabledThumbRadius: 10)
+                          : const RoundSliderThumbShape(enabledThumbRadius: 0),
                     ),
-                    onPressed: () {
-                      if (isPlaying) {
-                        context.read<PlayerBloc>().add(PauseSong());
-                      } else {
-                        // Do not play hardcoded file here; state should hold the song
-                        // You may want to handle "resume" differently if desired
-                      }
-                    },
+                    child: Listener(
+                      onPointerDown: (_) => setState(() => _showThumb = true),
+                      onPointerUp: (_) => setState(() => _showThumb = false),
+                      child: Slider(
+                        value: _currentPosition.inMilliseconds
+                            .clamp(0, _duration.inMilliseconds)
+                            .toDouble(),
+                        max: _duration.inMilliseconds.toDouble(),
+                        onChanged: _seekTo,
+                      ),
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.skip_next, color: Colors.white),
-                    onPressed: () {
-                      context.read<PlayerBloc>().add(PlayNext());
-                    },
-                  ),
-                ],
+                ),
               ),
             ],
           ),
         );
       },
     );
-  }
-
-  String _formatDuration(Duration d) {
-    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
   }
 }

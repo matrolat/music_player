@@ -16,17 +16,19 @@ class MusicLoaded extends MusicState {
   final List<SongModel> songs;
   final List<AlbumModel> albums;
   final List<ArtistModel> artists;
+  final List<SongModel> recentlyPlayed;
   final bool refreshed;
 
   MusicLoaded({
     required this.songs,
     required this.albums,
     required this.artists,
+    required this.recentlyPlayed,
     this.refreshed = false,
   });
 
   @override
-  List<Object?> get props => [songs, albums, artists, refreshed];
+  List<Object?> get props => [songs, albums, artists, recentlyPlayed, refreshed];
 }
 
 class MusicError extends MusicState {

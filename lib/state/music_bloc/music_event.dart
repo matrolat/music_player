@@ -13,3 +13,6 @@ class LoadMusicEvent extends MusicEvent {
   @override
   List<Object?> get props => [forceRefresh];
 }
+
+class RefreshRecentlyPlayedEvent extends MusicEvent {} // ✅ NEW
+

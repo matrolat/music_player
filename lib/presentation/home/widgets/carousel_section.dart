@@ -9,7 +9,7 @@ import 'artist_card.dart';
 class CarouselSection {
   static Widget songs(List<SongModel> songs) {
     return SizedBox(
-      height: 150,
+      height: 100,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -18,7 +18,7 @@ class CarouselSection {
         itemBuilder: (context, index) {
           final song = songs[index];
           return SizedBox(
-            width: 140,
+            width: 180,
             child: Card(
               color: Colors.grey[900],
               child: Center(
@@ -40,7 +40,7 @@ class CarouselSection {
 
   static Widget albums(List<AlbumModel> albums) {
     return SizedBox(
-      height: 150,
+      height: 200,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -49,7 +49,8 @@ class CarouselSection {
         itemBuilder: (context, index) {
           final album = albums[index];
           return SizedBox(
-            width: 100,
+            width: 150,
+            // height: 200,
             child: AlbumCard(album: album),
           );
         },

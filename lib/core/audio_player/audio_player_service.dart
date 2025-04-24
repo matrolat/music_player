@@ -1,18 +1,24 @@
-// 📁 core/audio_player/audio_player_service.dart (ensure durationStream is available)
-
 import 'package:just_audio/just_audio.dart';
 
 class AudioPlayerService {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _currentPath; // ✅ Track current song
 
   Future<void> play(String path) async {
     try {
-      await _audioPlayer.setFilePath(path);
+      if (_currentPath != path) {
+        await _audioPlayer.setFilePath(path);
+        _currentPath = path;
+      }
       await _audioPlayer.play();
     } catch (e) {
-      print('Error playing audio: \$e');
+      print('Error playing audio: $e');
     }
   }
+  Future<void> resume() async {
+  await _audioPlayer.play(); // play without setting new path
+}
+
 
   Future<void> pause() async => await _audioPlayer.pause();
   Future<void> stop() async => await _audioPlayer.stop();
@@ -27,10 +33,7 @@ class AudioPlayerService {
   Stream<Duration?> get durationStream => _audioPlayer.durationStream;
   Duration? get duration => _audioPlayer.duration;
   bool get isShuffling => _audioPlayer.shuffleModeEnabled;
-}
 
-class AudioPlayerManager {
-  static final AudioPlayerService _instance = AudioPlayerService();
-  static AudioPlayerService get instance => _instance;
-  AudioPlayerService get player => _instance;
+  // ✅ Add this getter to expose current song path
+  String? get currentPath => _currentPath;
 }
