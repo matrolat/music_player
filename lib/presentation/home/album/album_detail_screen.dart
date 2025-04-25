@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/core/audio_player/audio_player_manager.dart';
 import 'package:music_player/presentation/common/player_controls/mini_player.dart';
 import '../../../core/models/album_model.dart';
 import '../../../config/app_config.dart';
 import '../../../state/player_bloc/player_bloc.dart';
 import '../../../state/player_bloc/player_event.dart';
-import '../../common/audio_player_controls.dart';
 
 class AlbumDetailScreen extends StatelessWidget {
   final AlbumModel album;
@@ -15,8 +15,8 @@ class AlbumDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasValidImage =
-        (album.imagePath?.isNotEmpty ?? false) && File(album.imagePath!).existsSync();
+    final hasValidImage = (album.imagePath?.isNotEmpty ?? false) &&
+        File(album.imagePath!).existsSync();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -27,8 +27,6 @@ class AlbumDetailScreen extends StatelessWidget {
       body: Column(
         children: [
           const SizedBox(height: 16),
-
-          // Album image or fallback icon
           hasValidImage
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -39,20 +37,11 @@ class AlbumDetailScreen extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
                 )
-              : const Icon(
-                  Icons.album,
-                  size: 150,
-                  color: Colors.grey,
-                ),
-
+              : const Icon(Icons.album, size: 150, color: Colors.grey),
           const SizedBox(height: 12),
-          Text(
-            album.title,
-            style: const TextStyle(fontSize: 20, color: Colors.white),
-          ),
+          Text(album.title,
+              style: const TextStyle(fontSize: 20, color: Colors.white)),
           const SizedBox(height: 16),
-
-          // Song list
           Expanded(
             child: ListView.builder(
               itemCount: album.songs.length,
@@ -61,29 +50,31 @@ class AlbumDetailScreen extends StatelessWidget {
                 final isDev = AppConfig.isDevMode;
 
                 return ListTile(
-                  leading: const Icon(Icons.music_note, color: Colors.white),
-                  title: Text(
-                    song.title,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    song.artist,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  onTap: () {
-                    final songToPlay = isDev
-                        ? song.copyWith(path: 'assets/audio/sample.mp3')
-                        : song;
+                    leading: const Icon(Icons.music_note, color: Colors.white),
+                    title: Text(song.title,
+                        style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(song.artist,
+                        style: const TextStyle(color: Colors.grey)),
+                    onTap: () async {
+                      final songs = album.songs; // or artist.songs
+                      final clickedIndex = songs.indexOf(song);
+                      final playerService = AudioPlayerManager().player;
 
-                    context.read<PlayerBloc>().add(PlaySong(songToPlay));
-                  },
-                );
+                      // 1. Set new queue
+                      playerService.setQueue(songs, startIndex: clickedIndex);
+
+                      // 2. Play selected song
+                      await playerService.playCurrent();
+
+                      // 3. Notify Bloc about current song
+                      context
+                          .read<PlayerBloc>()
+                          .add(PlaySong(songs[clickedIndex]));
+                    });
               },
             ),
           ),
-
-          // const AudioPlayerControls(),
-          MiniPlayer(),
+          const MiniPlayer(),
         ],
       ),
     );

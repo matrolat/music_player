@@ -24,23 +24,24 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
 
-  Future<void> _onPlay(PlaySong event, Emitter<PlayerState> emit) async {
-    final song = event.song;
+Future<void> _onPlay(PlaySong event, Emitter<PlayerState> emit) async {
+  final song = event.song;
 
-    try {
-      if (_player.currentPath != song.path) {
-        emit(PlayerPlaying(song: song));
-        await _player.play(song.path);
-      } else {
-        await _player.resume();
-        emit(PlayerPlaying(song: song));
-      }
-         musicService.recordPlayed(song);
-         musicBloc.add(RefreshRecentlyPlayedEvent());
-    } catch (e) {
-      emit(PlayerError('Failed to play song: $e'));
+      emit(PlayerPlaying(song: song)); // ✅ Emit BEFORE playing
+  try {
+    if (_player.currentPath != song.path) {
+      await _player.play(song.path);
+    } else {
+      await _player.resume();
+      // emit(PlayerPlaying(song: song)); // ✅ Even for resume, emit after
     }
+    musicService.recordPlayed(song);
+    musicBloc.add(RefreshRecentlyPlayedEvent());
+  } catch (e) {
+    emit(PlayerError('Failed to play song: $e'));
   }
+}
+
 
  Future<void> _onPause(PauseSong event, Emitter<PlayerState> emit) async {
   await _player.pause();
