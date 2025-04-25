@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/presentation/common/player_controls/mini_player.dart';
 import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../library/library_screen.dart';
@@ -248,7 +249,8 @@ class _MainScreenState extends State<MainScreen>
             child: BlocBuilder<PlayerBloc, PlayerState>(
               builder: (context, state) {
                 if (state is PlayerPlaying || state is PlayerPaused) {
-                  return const AudioPlayerControls();
+                  // return const AudioPlayerControls();
+                  return MiniPlayer();
                 }
                 return const SizedBox.shrink();
               },

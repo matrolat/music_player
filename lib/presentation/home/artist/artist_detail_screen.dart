@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/presentation/common/player_controls/mini_player.dart';
 import '../../../core/models/artist_model.dart';
 import '../../../config/app_config.dart';
 import '../../../state/player_bloc/player_bloc.dart';
@@ -74,7 +75,8 @@ class ArtistDetailScreen extends StatelessWidget {
             ),
           ),
 
-          const AudioPlayerControls(),
+          // const AudioPlayerControls(),
+          MiniPlayer(),
         ],
       ),
     );
