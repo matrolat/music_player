@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/presentation/search/search_screen.dart';
+import 'package:music_player/state/search_data_bloc/search_data_bloc.dart';
 import 'core/services/music_service.dart';
 import 'state/music_bloc/music_bloc.dart';
 import 'state/music_bloc/music_event.dart';
@@ -17,14 +19,18 @@ class MyApp extends StatelessWidget {
         providers: [
           BlocProvider<MusicBloc>(
             create: (context) =>
-                MusicBloc(context.read<MusicService>())..add(LoadMusicEvent()),
+                MusicBloc(context.read<MusicService>())..add(LoadMusicEvent(forceRefresh: true)),
           ),
           BlocProvider<PlayerBloc>(
-  create: (context) => PlayerBloc(
-    context.read<MusicService>(),
-    context.read<MusicBloc>(), // ✅ Provide MusicBloc instance
-  ),
-),
+            create: (context) => PlayerBloc(
+              context.read<MusicService>(),
+              context.read<MusicBloc>(), // ✅ Provide MusicBloc instance
+            ),
+          ),
+          BlocProvider(
+            create: (context) => SearchDataBloc(MusicService()),
+            child: SearchScreen(),
+          )
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,

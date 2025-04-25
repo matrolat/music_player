@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/state/search_data_bloc/search_data_bloc.dart';
 
 import '../../core/models/album_model.dart';
 import '../../core/models/artist_model.dart';
@@ -19,6 +20,9 @@ class HomeScreen extends StatelessWidget {
     return BlocListener<MusicBloc, MusicState>(
       listener: (context, state) {
         if (state is MusicLoaded && state.refreshed) {
+          context.read<SearchDataBloc>().add(
+                LoadSearchData(state.songs, state.albums, state.artists),
+              );
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Music library refreshed')),
           );
@@ -38,7 +42,9 @@ class HomeScreen extends StatelessWidget {
             } else if (state is MusicLoaded) {
               return RefreshIndicator(
                 onRefresh: () async {
-                  context.read<MusicBloc>().add(LoadMusicEvent(forceRefresh: true));
+                  context
+                      .read<MusicBloc>()
+                      .add(LoadMusicEvent(forceRefresh: true));
                 },
                 color: Colors.white,
                 backgroundColor: Colors.grey[850],
@@ -63,7 +69,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                       CarouselSection.songs(state.recentlyPlayed),
                     ],
-
                     if (state.albums.isNotEmpty) ...[
                       SectionHeader(
                         title: 'Albums',
@@ -81,7 +86,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                       CarouselSection.albums(state.albums),
                     ],
-
                     if (state.artists.isNotEmpty) ...[
                       SectionHeader(
                         title: 'Artists',

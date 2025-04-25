@@ -18,7 +18,7 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
       final albums = await musicService.fetchAlbums(forceRefresh: event.forceRefresh);
       final artists = await musicService.fetchArtists(forceRefresh: event.forceRefresh);
       final recentlyPlayed = await musicService.getRecentlyPlayedSongs();
-
+      
       emit(MusicLoaded(
         songs: songs,
         albums: albums,
