@@ -18,7 +18,8 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin {
+class _MainScreenState extends State<MainScreen>
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _selectedIndex = 0;
   bool _showSidebar = false;
@@ -121,6 +122,27 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
               children: _screens,
             ),
           ),
+          Positioned(
+            top: screenPadding + 46, // Just below appbar title area
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_screens.length, (index) {
+                final isSelected = index == _selectedIndex;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: isSelected ? 4 : 4,
+                  height: isSelected ? 4 : 4,
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.greenAccent : Colors.white24,
+                    shape: BoxShape.circle,
+                  ),
+                );
+              }),
+            ),
+          ),
 
           // Sidebar gesture area
           Positioned(
@@ -182,7 +204,12 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                         bottomRight: Radius.circular(16),
                       ),
                 boxShadow: _showSidebar
-                    ? [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(2, 2))]
+                    ? [
+                        BoxShadow(
+                            color: Colors.black45,
+                            blurRadius: 10,
+                            offset: Offset(2, 2))
+                      ]
                     : [],
               ),
               child: Column(
@@ -194,7 +221,9 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                     curve: Curves.easeInOut,
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.greenAccent.withOpacity(0.15) : Colors.transparent,
+                      color: isSelected
+                          ? Colors.greenAccent.withOpacity(0.15)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
