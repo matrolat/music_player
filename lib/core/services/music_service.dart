@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:music_player/core/services/native_meta_data_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -41,15 +42,25 @@ class MusicService {
 
       if (!hasScannedBefore) await prefs.setBool(_firstRunKey, true);
 
-      return files.map((file) {
-        final filename = file.uri.pathSegments.last;
-        return SongModel(
+      final songs = <SongModel>[];
+      for (final file in files) {
+        final metadata = await NativeMetadataService.getMetadata(file.path);
+        final title = metadata['title']?.trim().isNotEmpty == true
+            ? metadata['title']!
+            : file.uri.pathSegments.last;
+        final artist = metadata['artist']?.trim().isNotEmpty == true
+            ? metadata['artist']!
+            : 'Unknown Artist';
+
+        songs.add(SongModel(
           id: file.path.hashCode.toString(),
-          title: filename,
-          artist: 'Unknown Artist',
+          title: title,
+          artist: artist,
           path: file.path,
-        );
-      }).toList();
+        ));
+      }
+
+      return songs;
     } else {
       return [];
     }
@@ -82,14 +93,20 @@ class MusicService {
     if (AppConfig.isDevMode) return DevDataLoader.getArtists();
 
     final songs = await fetchSongs(forceRefresh: forceRefresh);
-    return [
-      ArtistModel(
-        id: '1',
-        name: 'Local Files',
+    final artistMap = <String, List<SongModel>>{};
+
+    for (var song in songs) {
+      artistMap.putIfAbsent(song.artist, () => []).add(song);
+    }
+
+    return artistMap.entries.map((entry) {
+      return ArtistModel(
+        id: entry.key.hashCode.toString(),
+        name: entry.key,
         imagePath: '',
-        songs: songs,
-      )
-    ];
+        songs: entry.value,
+      );
+    }).toList();
   }
 
   String _findAlbumArt(String directoryPath) {
