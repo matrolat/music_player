@@ -5,6 +5,7 @@ import 'package:music_player/core/models/song_model.dart';
 import 'package:music_player/state/player_bloc/player_bloc.dart';
 import 'package:music_player/state/player_bloc/player_event.dart';
 import 'package:music_player/state/player_bloc/player_state.dart';
+import 'package:just_audio/just_audio.dart' as audio; // <-- Important
 
 class FullPlayer extends StatefulWidget {
   const FullPlayer({super.key});
@@ -17,31 +18,38 @@ class _FullPlayerState extends State<FullPlayer> {
   bool _isLoading = false;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  bool _isActuallyPlaying = false; // 🔥 Track playing properly
 
-@override
-void initState() {
-  super.initState();
-  final bloc = context.read<PlayerBloc>();
+  @override
+  void initState() {
+    super.initState();
+    final bloc = context.read<PlayerBloc>();
 
-  bloc.player.positionStream.listen((pos) {
-    if (mounted) {
-      setState(() => _position = pos);
-
-      final dur = bloc.player.duration ?? Duration.zero;
-      if (dur.inMilliseconds > 0 &&
-          (dur.inMilliseconds - pos.inMilliseconds).abs() <= 500) { // 500ms margin
-        // 🔥 Song is about to end naturally
-        context.read<PlayerBloc>().add(PlayNext());
+    bloc.player.playerStateStream.listen((state) {
+      if (mounted) {
+        _isActuallyPlaying = state.playing && state.processingState == audio.ProcessingState.ready;
       }
-    }
-  });
+    });
 
-  bloc.player.durationStream.listen((dur) {
-    if (mounted) {
-      setState(() => _duration = dur ?? Duration.zero);
-    }
-  });
-}
+    bloc.player.positionStream.listen((pos) {
+      if (mounted) {
+        setState(() => _position = pos);
+
+        final dur = bloc.player.duration ?? Duration.zero;
+        if (_isActuallyPlaying &&
+            dur.inMilliseconds > 0 &&
+            (dur.inMilliseconds - pos.inMilliseconds).abs() <= 800) {
+          context.read<PlayerBloc>().add(PlayNext());
+        }
+      }
+    });
+
+    bloc.player.durationStream.listen((dur) {
+      if (mounted) {
+        setState(() => _duration = dur ?? Duration.zero);
+      }
+    });
+  }
 
   String _formatTime(Duration d) {
     return d.toString().split('.').first.substring(2, 7);
@@ -111,8 +119,8 @@ void initState() {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: hasImage
-                      ? Image.file(imagePath, height: MediaQuery.of(context).size.height * 0.42, fit: BoxFit.cover)
-                      : Image.asset('assets/images/album.png', height: MediaQuery.of(context).size.height * 0.42),
+                        ? Image.file(imagePath, height: MediaQuery.of(context).size.height * 0.42, fit: BoxFit.cover)
+                        : Image.asset('assets/images/album.png', height: MediaQuery.of(context).size.height * 0.42),
                   ),
                   const SizedBox(height: 36),
 

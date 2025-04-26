@@ -20,6 +20,14 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<SeekSong>(_onSeek);
     on<PlayNext>(_onNext);
     on<PlayPrevious>(_onPrevious);
+
+    // 🔥 Handle auto next when song ends
+
+    _player.onSongEnded = () {
+  Future.delayed(Duration(milliseconds: 100), () {
+    add(PlayNext());
+  });
+};
   }
 
   AudioPlayerService get player => _player;
@@ -30,16 +38,23 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
   Future<void> _onPlay(PlaySong event, Emitter<PlayerState> emit) async {
     final song = event.song;
-    emit(PlayerPlaying(song: song));
 
     try {
-      if (event.queue != null) {
-        await _player.setQueue(event.queue!);
-      }
-      await _player.playSong(song);
+      if (state is PlayerPaused && areSongsSame(song, (state as PlayerPaused).song)) {
+        // Resume if same song
+        emit(PlayerPlaying(song: song));
+        await _player.resume();
+      } else {
+        emit(PlayerPlaying(song: song));
 
-      musicService.recordPlayed(song);
-      musicBloc.add(RefreshRecentlyPlayedEvent());
+        if (event.queue != null) {
+          await _player.setQueue(event.queue!);
+        }
+        await _player.playSong(song);
+
+        musicService.recordPlayed(song);
+        musicBloc.add(RefreshRecentlyPlayedEvent());
+      }
     } catch (e) {
       emit(PlayerError('Failed to play song: $e'));
     }

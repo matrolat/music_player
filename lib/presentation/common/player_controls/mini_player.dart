@@ -21,12 +21,18 @@ class _MiniPlayerState extends State<MiniPlayer> {
   @override
   void initState() {
     super.initState();
-
     final bloc = context.read<PlayerBloc>();
 
     bloc.player.positionStream.listen((pos) {
       if (mounted) {
         setState(() => _position = pos);
+
+        final dur = bloc.player.duration ?? Duration.zero;
+        if (bloc.player.isPlaying &&
+            dur.inMilliseconds > 0 &&
+            (dur.inMilliseconds - pos.inMilliseconds).abs() <= 500) {
+          context.read<PlayerBloc>().add(PlayNext());
+        }
       }
     });
 
@@ -37,18 +43,18 @@ class _MiniPlayerState extends State<MiniPlayer> {
     });
   }
 
+  void _seekTo(double value) {
+    context.read<PlayerBloc>().add(
+      SeekSong(Duration(milliseconds: value.toInt())),
+    );
+  }
+
   void _openFullPlayer(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => const FullPlayer(),
-    );
-  }
-
-  void _seekTo(double value) {
-    context.read<PlayerBloc>().add(
-      SeekSong(Duration(milliseconds: value.toInt())),
     );
   }
 
