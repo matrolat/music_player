@@ -18,23 +18,30 @@ class _FullPlayerState extends State<FullPlayer> {
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
 
-  @override
-  void initState() {
-    super.initState();
-    final bloc = context.read<PlayerBloc>();
+@override
+void initState() {
+  super.initState();
+  final bloc = context.read<PlayerBloc>();
 
-    bloc.player.positionStream.listen((pos) {
-      if (mounted) {
-        setState(() => _position = pos);
-      }
-    });
+  bloc.player.positionStream.listen((pos) {
+    if (mounted) {
+      setState(() => _position = pos);
 
-    bloc.player.durationStream.listen((dur) {
-      if (mounted) {
-        setState(() => _duration = dur ?? Duration.zero);
+      final dur = bloc.player.duration ?? Duration.zero;
+      if (dur.inMilliseconds > 0 &&
+          (dur.inMilliseconds - pos.inMilliseconds).abs() <= 500) { // 500ms margin
+        // 🔥 Song is about to end naturally
+        context.read<PlayerBloc>().add(PlayNext());
       }
-    });
-  }
+    }
+  });
+
+  bloc.player.durationStream.listen((dur) {
+    if (mounted) {
+      setState(() => _duration = dur ?? Duration.zero);
+    }
+  });
+}
 
   String _formatTime(Duration d) {
     return d.toString().split('.').first.substring(2, 7);
