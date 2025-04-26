@@ -37,8 +37,8 @@ class _FullPlayerState extends State<FullPlayer> {
 
         final dur = bloc.player.duration ?? Duration.zero;
         if (_isActuallyPlaying &&
-            dur.inMilliseconds > 0 &&
-            (dur.inMilliseconds - pos.inMilliseconds).abs() <= 800) {
+            dur.inMilliseconds >= 0 &&
+            (dur.inMilliseconds - pos.inMilliseconds).abs() <= 300) {
           context.read<PlayerBloc>().add(PlayNext());
         }
       }
@@ -117,12 +117,27 @@ class _FullPlayerState extends State<FullPlayer> {
 
                   // Album Art
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: hasImage
-                        ? Image.file(imagePath, height: MediaQuery.of(context).size.height * 0.42, fit: BoxFit.cover)
-                        : Image.asset('assets/images/album.png', height: MediaQuery.of(context).size.height * 0.42),
-                  ),
-                  const SizedBox(height: 36),
+  borderRadius: BorderRadius.circular(20),
+  child: hasImage
+      ? Image.file(
+          imagePath,
+          height: MediaQuery.of(context).size.height * 0.42,
+          fit: BoxFit.cover,
+        )
+      : Container(
+          height: MediaQuery.of(context).size.height * 0.42,
+          color: Colors.white12, // light background
+          child: const Center(
+            child: Icon(
+              Icons.album,
+              color: Colors.white38,
+              size: 100,
+            ),
+          ),
+        ),
+),
+const SizedBox(height: 36),
+
 
                   // Song Info
                   Center(
