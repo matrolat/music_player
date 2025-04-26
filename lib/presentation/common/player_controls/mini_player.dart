@@ -4,7 +4,6 @@ import 'package:music_player/core/models/song_model.dart';
 import 'package:music_player/state/player_bloc/player_bloc.dart';
 import 'package:music_player/state/player_bloc/player_event.dart';
 import 'package:music_player/state/player_bloc/player_state.dart';
-import 'player_controller.dart';
 import 'full_player.dart';
 
 class MiniPlayer extends StatefulWidget {
@@ -15,11 +14,7 @@ class MiniPlayer extends StatefulWidget {
 }
 
 class _MiniPlayerState extends State<MiniPlayer> {
-  final _controller = PlayerController();
-
-  late Stream<Duration> _positionStream;
-  late Stream<Duration?> _durationStream;
-  Duration _currentPosition = Duration.zero;
+  Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
   bool _showThumb = false;
 
@@ -27,24 +22,19 @@ class _MiniPlayerState extends State<MiniPlayer> {
   void initState() {
     super.initState();
 
-    _positionStream = _controller.positionStream;
-    _durationStream = _controller.durationStream;
+    final bloc = context.read<PlayerBloc>();
 
-    _positionStream.listen((position) {
-      setState(() {
-        _currentPosition = position;
-      });
+    bloc.player.positionStream.listen((pos) {
+      if (mounted) {
+        setState(() => _position = pos);
+      }
     });
 
-    _durationStream.listen((duration) {
-      setState(() {
-        _duration = duration ?? Duration.zero;
-      });
+    bloc.player.durationStream.listen((dur) {
+      if (mounted) {
+        setState(() => _duration = dur ?? Duration.zero);
+      }
     });
-  }
-
-  void _seekTo(double value) {
-    _controller.seekTo(Duration(milliseconds: value.toInt()));
   }
 
   void _openFullPlayer(BuildContext context) {
@@ -56,15 +46,25 @@ class _MiniPlayerState extends State<MiniPlayer> {
     );
   }
 
+  void _seekTo(double value) {
+    context.read<PlayerBloc>().add(
+      SeekSong(Duration(milliseconds: value.toInt())),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, state) {
         SongModel? song;
-        bool isPlaying = _controller.isPlaying;
+        bool isPlaying = false;
 
-        if (state is PlayerPlaying || state is PlayerPaused) {
-          song = (state as dynamic).song;
+        if (state is PlayerPlaying) {
+          song = state.song;
+          isPlaying = true;
+        } else if (state is PlayerPaused) {
+          song = state.song;
+          isPlaying = false;
         }
 
         if (song == null) return const SizedBox.shrink();
@@ -159,14 +159,14 @@ class _MiniPlayerState extends State<MiniPlayer> {
                       thumbColor: const Color(0xFF1DB954),
                       overlayShape: SliderComponentShape.noOverlay,
                       thumbShape: _showThumb
-                          ? const RoundSliderThumbShape(enabledThumbRadius: 10)
+                          ? const RoundSliderThumbShape(enabledThumbRadius: 8)
                           : const RoundSliderThumbShape(enabledThumbRadius: 0),
                     ),
                     child: Listener(
                       onPointerDown: (_) => setState(() => _showThumb = true),
                       onPointerUp: (_) => setState(() => _showThumb = false),
                       child: Slider(
-                        value: _currentPosition.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble(),
+                        value: _position.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble(),
                         max: _duration.inMilliseconds.toDouble(),
                         onChanged: _seekTo,
                       ),
